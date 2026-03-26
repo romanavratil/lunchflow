@@ -1,0 +1,59 @@
+export interface MenuItem {
+  name: string;
+  price: string;
+  soldOut?: boolean;
+}
+
+export interface ParsedMenu {
+  soup: string | null;
+  soupPrice: string | null;
+  mains: MenuItem[];
+}
+
+export interface WidgetConfig {
+  // Schedule
+  showFrom: string;       // "HH:MM" 24h, e.g. "11:00"
+  showUntil: string;      // "HH:MM" 24h, e.g. "15:00"
+  // Appearance
+  theme: "light" | "dark" | "branded";
+  fabPosition: "bottom-right" | "bottom-left";
+  fabLabel: string;
+  fabColor: string;       // hex
+  modalBg: string;        // hex
+  modalAccent: string;    // hex — used for left border, soup line, etc.
+  modalText: string;      // hex
+  borderRadius: "sharp" | "rounded" | "pill";
+}
+
+export const DEFAULT_WIDGET_CONFIG: WidgetConfig = {
+  showFrom: "00:00",
+  showUntil: "23:59",
+  theme: "light",
+  fabPosition: "bottom-right",
+  fabLabel: "Today's Menu",
+  fabColor: "#6366f1",
+  modalBg: "#ffffff",
+  modalAccent: "#6366f1",
+  modalText: "#111111",
+  borderRadius: "rounded",
+};
+
+export interface WidgetData {
+  restaurant: {
+    name: string;
+    brandingColor: string;
+    logoUrl: string | null;
+  };
+  menu: {
+    id: string;
+    soup: string | null;
+    soupPrice: string | null;
+    mains: MenuItem[];
+  } | null;
+  announcement: {
+    text: string;
+    bgColor: string;
+    textColor: string;
+  } | null;
+  widgetConfig: WidgetConfig;
+}
