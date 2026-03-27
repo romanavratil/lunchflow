@@ -31,6 +31,7 @@ export interface WidgetConfig {
   currency: string;            // suffix appended to prices, e.g. "Kč", "€", "$"
   // Panel header
   modalTitle: string;          // custom label shown at the top of the menu panel
+  priceColor: string;          // hex — color used for prices (defaults to accent)
 }
 
 export const DEFAULT_WIDGET_CONFIG: WidgetConfig = {
@@ -48,6 +49,7 @@ export const DEFAULT_WIDGET_CONFIG: WidgetConfig = {
   displayMode: "corner",
   currency: "",
   modalTitle: "",
+  priceColor: "",
 };
 
 export interface WidgetData {

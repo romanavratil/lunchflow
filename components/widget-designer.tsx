@@ -125,7 +125,7 @@ function ModalPreview({ cfg }: { cfg: WidgetConfig; currency?: string }) {
                   <div style={{ fontSize: 9, color: "#dc2626", fontWeight: 700, background: "#fee2e2", padding: "2px 6px", borderRadius: 20, marginTop: 2, display: "inline-block" }}>SOLD OUT</div>
                 )}
               </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: cfg.modalAccent, whiteSpace: "nowrap" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: cfg.priceColor || cfg.modalAccent, whiteSpace: "nowrap" }}>
                 {item.price}{cfg.currency ? `\u00a0${cfg.currency}` : ""}
               </div>
             </div>
@@ -301,7 +301,7 @@ export function WidgetDesigner({ restaurantId }: WidgetDesignerProps) {
             Colors
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             {/* Accent */}
             <div className="space-y-2">
               <Label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Accent</Label>
@@ -365,6 +365,27 @@ export function WidgetDesigner({ restaurantId }: WidgetDesignerProps) {
                 <Input
                   value={cfg.modalText}
                   onChange={e => set("modalText", e.target.value)}
+                  className="h-8 font-mono text-xs flex-1"
+                  maxLength={7}
+                />
+              </div>
+            </div>
+
+            {/* Price color */}
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Prices</Label>
+              <p className="text-[10px] text-zinc-400 leading-tight">Leave empty to use accent color</p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={cfg.priceColor || cfg.modalAccent}
+                  onChange={e => set("priceColor", e.target.value)}
+                  className="h-8 w-8 rounded cursor-pointer border-0"
+                />
+                <Input
+                  value={cfg.priceColor}
+                  onChange={e => set("priceColor", e.target.value)}
+                  placeholder={cfg.modalAccent}
                   className="h-8 font-mono text-xs flex-1"
                   maxLength={7}
                 />

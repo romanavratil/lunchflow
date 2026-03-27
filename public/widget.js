@@ -92,6 +92,7 @@
     var rSm    = cfg.borderRadius === "sharp" ? "0px" : cfg.borderRadius === "pill" ? "14px" : "10px";
     var bg     = (cfg && cfg.modalBg)     || "#ffffff";
     var accent = (cfg && cfg.modalAccent) || "#6366f1";
+    var price  = (cfg && cfg.priceColor)  || accent;
     var text   = (cfg && cfg.modalText)   || "#111111";
     var isDark = (function(hex) {
       hex = hex.replace("#", "");
@@ -168,7 +169,7 @@
       ".lf-rdesc{font-size:11px;color:" + sub + ";margin-top:1px;line-height:1.35}" +
       ".lf-row.out .lf-rname{text-decoration:line-through}" +
       ".lf-rtag{font-size:9px;font-weight:700;background:#fee2e2;color:#dc2626;padding:2px 6px;border-radius:20px;margin-top:2px}" +
-      ".lf-rprice{font-size:13px;font-weight:700;color:" + accent + ";white-space:nowrap}" +
+      ".lf-rprice{font-size:13px;font-weight:700;color:" + price + ";white-space:nowrap}" +
       ".lf-empty{text-align:center;padding:28px 16px;color:" + sub + ";font-size:13px}" +
       ".lf-foot{text-align:center;padding:10px 20px 20px;font-size:10px;color:" + sub + ";" +
       "flex-shrink:0;border-top:1px solid " + border + "}" +
