@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
-import MapWrapper from "./MapWrapper";
 import BrowseClient from "./BrowseClient";
 
 export const metadata: Metadata = {
@@ -40,8 +39,6 @@ export default async function MapPage() {
 
   return (
     <>
-      {/* Keep MapWrapper imported so the chunk isn't tree-shaken */}
-      <div style={{ display: "none" }}><MapWrapper restaurants={[]} /></div>
       <BrowseClient
         restaurants={restaurants as never}
         today={today}
