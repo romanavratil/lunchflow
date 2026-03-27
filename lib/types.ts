@@ -29,6 +29,8 @@ export interface WidgetConfig {
   displayMode: "corner" | "modal"; // corner = above FAB; modal = centered overlay
   // Localisation
   currency: string;            // suffix appended to prices, e.g. "Kč", "€", "$"
+  // Panel header
+  modalTitle: string;          // custom label shown at the top of the menu panel
 }
 
 export const DEFAULT_WIDGET_CONFIG: WidgetConfig = {
@@ -45,6 +47,7 @@ export const DEFAULT_WIDGET_CONFIG: WidgetConfig = {
   autoOpen: false,
   displayMode: "corner",
   currency: "",
+  modalTitle: "",
 };
 
 export interface WidgetData {

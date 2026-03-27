@@ -55,7 +55,7 @@ function bgLuminance(hex: string): number {
   return 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b);
 }
 
-function ModalPreview({ cfg, name }: { cfg: WidgetConfig; name: string; currency?: string }) {
+function ModalPreview({ cfg }: { cfg: WidgetConfig; currency?: string }) {
   const r = px(cfg.borderRadius);
   const isDark = bgLuminance(cfg.modalBg) < 0.35;
   const subText = isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.4)";
@@ -78,7 +78,7 @@ function ModalPreview({ cfg, name }: { cfg: WidgetConfig; name: string; currency
 
       {/* header */}
       <div style={{ padding: "12px 20px 8px" }}>
-        <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-0.03em", color: cfg.modalText }}>{name}</div>
+        <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-0.03em", color: cfg.modalText }}>{cfg.modalTitle || "Today's Menu"}</div>
         <div style={{ fontSize: 11, fontWeight: 600, color: subText, marginTop: 3, letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
         </div>
@@ -157,7 +157,7 @@ function FabPreview({ cfg }: { cfg: WidgetConfig }) {
   );
 }
 
-export function WidgetDesigner({ restaurantId, restaurantName }: WidgetDesignerProps) {
+export function WidgetDesigner({ restaurantId }: WidgetDesignerProps) {
   const [cfg, setCfg]     = useState<WidgetConfig>(DEFAULT_WIDGET_CONFIG);
   const [saving, setSaving]     = useState(false);
   const [saved,  setSaved]      = useState(false);
@@ -383,6 +383,19 @@ export function WidgetDesigner({ restaurantId, restaurantName }: WidgetDesignerP
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Panel title */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Panel Title</Label>
+              <Input
+                value={cfg.modalTitle}
+                onChange={e => set("modalTitle", e.target.value)}
+                placeholder="Today's Menu"
+                maxLength={40}
+                className="h-10"
+              />
+              <p className="text-[11px] text-zinc-400">Shown at the top of the menu panel</p>
+            </div>
+
             {/* Button label */}
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Button Label</Label>
@@ -545,7 +558,7 @@ export function WidgetDesigner({ restaurantId, restaurantName }: WidgetDesignerP
         <div>
           <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-widest mb-2 pl-1">Open — panel above button</p>
           <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 space-y-2">
-            <ModalPreview cfg={cfg} name={restaurantName} currency={cfg.currency} />
+            <ModalPreview cfg={cfg} currency={cfg.currency} />
             {/* FAB below the panel, same side */}
             <div className={`flex ${cfg.fabPosition === "bottom-left" ? "justify-start" : "justify-end"}`}>
               <FabPreview cfg={cfg} />

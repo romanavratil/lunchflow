@@ -297,7 +297,7 @@
     // Header
     var head = el("div", { className: "lf-head" });
     var titleWrap = el("div", {}, [
-      el("div", { className: "lf-name" }, d.restaurant && d.restaurant.name || "Today's Menu"),
+      el("div", { className: "lf-name" }, cfg.modalTitle || (d.restaurant && d.restaurant.name) || "Today's Menu"),
       el("div", { className: "lf-date" }, date)
     ]);
     var closeBtn = el("button", { className: "lf-x", innerHTML: "×", onclick: this._close.bind(this) });
