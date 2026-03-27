@@ -41,7 +41,7 @@ export default async function MenuPage({
   const cfg: WidgetConfig = { ...DEFAULT_WIDGET_CONFIG, ...(restaurant.widgetConfig as Partial<WidgetConfig>) };
   const accent = cfg.modalAccent || restaurant.brandingColor || "#6366f1";
   const currency = cfg.currency || "";
-  const mains = (menu?.mains ?? []) as MenuItem[];
+  const mains = (menu?.mains ?? []) as unknown as MenuItem[];
 
   const date = new Date().toLocaleDateString("en-US", {
     weekday: "long", month: "long", day: "numeric",

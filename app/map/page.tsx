@@ -1,17 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
-
-export const dynamic_ = "force-dynamic";
-export { dynamic_ as dynamic };
+import MapWrapper from "./MapWrapper";
 
 export const metadata: Metadata = {
   title: "Restaurant Map — LunchFlow",
   description: "Find restaurants near you and see today's lunch menus on the map.",
 };
-
-const MapClient = dynamic(() => import("./MapClient"), { ssr: false });
 
 async function getRestaurantsOnMap() {
   const todayStart = new Date(); todayStart.setUTCHours(0, 0, 0, 0);
@@ -175,7 +170,7 @@ export default async function MapPage() {
                 </Link>
               </div>
             ) : (
-              <MapClient restaurants={restaurants as Parameters<typeof MapClient>[0]["restaurants"]} />
+              <MapWrapper restaurants={restaurants as never} />
             )}
           </div>
         </div>
