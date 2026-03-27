@@ -191,8 +191,8 @@ export function SettingsSection({
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-5">
       {/* Restaurant settings */}
-      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm overflow-hidden">
-        <div className="px-5 pt-5 pb-4 border-b border-gray-100">
+      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm">
+        <div className="px-5 pt-5 pb-4 border-b border-gray-100 rounded-t-2xl">
           <div className="flex items-center gap-2 mb-0.5">
             <Building2 className="h-4 w-4 text-indigo-500" />
             <h2 className="text-[14px] font-semibold text-gray-900">Restaurant</h2>
