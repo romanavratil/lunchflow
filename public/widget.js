@@ -245,8 +245,8 @@
     this.fab.appendChild(svgFork());
     this.fab.appendChild(document.createTextNode(label));
 
-    // FAB visibility — reveal only after styles+label are ready
-    var visible = inSchedule(cfg);
+    // FAB visibility — only show if schedule matches AND a published menu exists
+    var visible = inSchedule(cfg) && !!d.menu;
     var self = this;
     if (this._firstLoad) {
       this._firstLoad = false;
