@@ -67,6 +67,12 @@ export default async function LandingPage() {
             <a href="#menus" style={{ fontSize: 13, fontWeight: 500, color: "#6B7280", padding: "6px 12px", borderRadius: 8, textDecoration: "none" }}>
               Browse menus
             </a>
+            <Link href="/map" style={{ fontSize: 13, fontWeight: 500, color: "#6B7280", padding: "6px 12px", borderRadius: 8, textDecoration: "none", display: "flex", alignItems: "center", gap: 5 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+              </svg>
+              Map
+            </Link>
             <a href="#for-restaurants" style={{ fontSize: 13, fontWeight: 500, color: "#6B7280", padding: "6px 12px", borderRadius: 8, textDecoration: "none" }}>
               For restaurants
             </a>
@@ -178,11 +184,24 @@ export default async function LandingPage() {
                 Today&apos;s lunch menus
               </h2>
             </div>
-            {restaurants.length > 0 && (
-              <div style={{ fontSize: 12, fontWeight: 600, color: "#6B7280", background: "#F3F4F6", padding: "6px 12px", borderRadius: 100 }}>
-                {restaurants.length} open today
-              </div>
-            )}
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {restaurants.length > 0 && (
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#6B7280", background: "#F3F4F6", padding: "6px 12px", borderRadius: 100 }}>
+                  {restaurants.length} open today
+                </div>
+              )}
+              <Link href="/map" style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                fontSize: 12, fontWeight: 700, color: "#E85D04",
+                background: "#FEF3EC", border: "1px solid #FDDCBF",
+                padding: "6px 12px", borderRadius: 100, textDecoration: "none",
+              }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/>
+                </svg>
+                View on map
+              </Link>
+            </div>
           </div>
 
           {/* Cards */}
