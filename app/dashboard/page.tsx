@@ -1,5 +1,5 @@
-// The dashboard shell (layout.tsx) handles everything.
-// This file satisfies Next.js route requirements.
+import { redirect } from "next/navigation";
+
 export default function DashboardPage() {
-  return null;
+  redirect("/dashboard/menu");
 }

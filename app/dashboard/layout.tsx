@@ -20,6 +20,7 @@ export default async function DashboardLayout({
     <DashboardShell
       restaurantId={restaurant?.id ?? ""}
       restaurantName={restaurant?.name ?? "My Restaurant"}
+      brandingColor={restaurant?.brandingColor ?? "#6366f1"}
       userName={session.user.name ?? ""}
       userEmail={session.user.email ?? ""}
     >

@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
   UtensilsCrossed,
@@ -11,40 +12,45 @@ import {
   Settings,
   LogOut,
   Menu,
-  X,
   ChefHat,
+  BarChart2,
 } from "lucide-react";
+import { useState } from "react";
 
 interface Restaurant {
   id: string;
   name: string;
+  brandingColor: string;
 }
 
-const RestaurantContext = createContext<Restaurant>({ id: "", name: "" });
+const RestaurantContext = createContext<Restaurant>({ id: "", name: "", brandingColor: "#6366f1" });
 export const useRestaurant = () => useContext(RestaurantContext);
 
 const NAV = [
-  { key: "menu", label: "Today's Menu", icon: UtensilsCrossed, desc: "Import & publish your daily menu" },
-  { key: "announce", label: "Announcement", icon: Megaphone, desc: "Banner message for customers" },
-  { key: "share", label: "Social Share", icon: Share2, desc: "Generate social media assets" },
-  { key: "widget", label: "Widget", icon: Wand2, desc: "Customize & embed your widget" },
-  { key: "settings", label: "Settings", icon: Settings, desc: "Restaurant & account settings" },
+  { key: "menu",         href: "/dashboard/menu",         label: "Today's Menu",  icon: UtensilsCrossed, desc: "Import & publish your daily menu" },
+  { key: "announcement", href: "/dashboard/announcement", label: "Announcement",  icon: Megaphone,       desc: "Banner message for customers" },
+  { key: "share",        href: "/dashboard/share",        label: "Social Share",  icon: Share2,          desc: "Generate social media assets" },
+  { key: "widget",       href: "/dashboard/widget",       label: "Widget",        icon: Wand2,           desc: "Customize & embed your widget" },
+  { key: "analytics",    href: "/dashboard/analytics",    label: "Analytics",     icon: BarChart2,       desc: "Widget opens & engagement stats" },
+  { key: "settings",     href: "/dashboard/settings",     label: "Settings",      icon: Settings,        desc: "Restaurant & account settings" },
 ];
 
 export function DashboardShell({
   children,
   restaurantId,
   restaurantName,
+  brandingColor,
   userName,
   userEmail,
 }: {
   children: React.ReactNode;
   restaurantId: string;
   restaurantName: string;
+  brandingColor: string;
   userName: string;
   userEmail: string;
 }) {
-  const [active, setActive] = useState("menu");
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const initials = (userName || userEmail || "U")
@@ -54,10 +60,10 @@ export function DashboardShell({
     .toUpperCase()
     .slice(0, 2);
 
-  const activeNav = NAV.find((n) => n.key === active)!;
+  const activeNav = NAV.find((n) => pathname.startsWith(n.href)) ?? NAV[0];
 
   return (
-    <RestaurantContext.Provider value={{ id: restaurantId, name: restaurantName }}>
+    <RestaurantContext.Provider value={{ id: restaurantId, name: restaurantName, brandingColor }}>
       <div className="flex h-screen bg-[#f5f5f7] overflow-hidden">
         {/* ── Sidebar ──────────────────────────────────────────────────────── */}
         <aside
@@ -88,23 +94,27 @@ export function DashboardShell({
 
           {/* Nav */}
           <nav className="flex-1 px-2.5 py-3 overflow-y-auto space-y-0.5">
-            {NAV.map(({ key, label, icon: Icon }) => (
-              <button
-                key={key}
-                onClick={() => { setActive(key); setMobileOpen(false); }}
-                className={`
-                  w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium
-                  transition-all duration-150 text-left
-                  ${active === key
-                    ? "bg-indigo-500/15 text-indigo-300"
-                    : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]"
-                  }
-                `}
-              >
-                <Icon className={`h-4 w-4 shrink-0 ${active === key ? "text-indigo-400" : ""}`} />
-                {label}
-              </button>
-            ))}
+            {NAV.map(({ key, href, label, icon: Icon }) => {
+              const isActive = pathname.startsWith(href);
+              return (
+                <Link
+                  key={key}
+                  href={href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`
+                    w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium
+                    transition-all duration-150
+                    ${isActive
+                      ? "bg-indigo-500/15 text-indigo-300"
+                      : "text-white/40 hover:text-white/70 hover:bg-white/[0.04]"
+                    }
+                  `}
+                >
+                  <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-indigo-400" : ""}`} />
+                  {label}
+                </Link>
+              );
+            })}
           </nav>
 
           {/* User */}
@@ -164,7 +174,7 @@ export function DashboardShell({
 
           {/* Content */}
           <main className="flex-1 overflow-y-auto">
-            <DashboardContent active={active} restaurantId={restaurantId} restaurantName={restaurantName} />
+            {children}
           </main>
         </div>
       </div>
@@ -172,28 +182,3 @@ export function DashboardShell({
   );
 }
 
-// ── Content router ────────────────────────────────────────────────────────────
-import { MenuSection } from "./sections/menu";
-import { AnnounceSection } from "./sections/announce";
-import { ShareSection } from "./sections/share";
-import { WidgetSection } from "./sections/widget";
-import { SettingsSection } from "./sections/settings";
-
-function DashboardContent({
-  active,
-  restaurantId,
-  restaurantName,
-}: {
-  active: string;
-  restaurantId: string;
-  restaurantName: string;
-}) {
-  switch (active) {
-    case "menu":     return <MenuSection restaurantId={restaurantId} restaurantName={restaurantName} />;
-    case "announce": return <AnnounceSection restaurantId={restaurantId} />;
-    case "share":    return <ShareSection restaurantId={restaurantId} restaurantName={restaurantName} />;
-    case "widget":   return <WidgetSection restaurantId={restaurantId} restaurantName={restaurantName} />;
-    case "settings": return <SettingsSection restaurantId={restaurantId} restaurantName={restaurantName} />;
-    default:         return null;
-  }
-}

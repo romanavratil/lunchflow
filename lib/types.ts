@@ -1,5 +1,6 @@
 export interface MenuItem {
   name: string;
+  description?: string;
   price: string;
   soldOut?: boolean;
 }
@@ -23,6 +24,11 @@ export interface WidgetConfig {
   modalAccent: string;    // hex — used for left border, soup line, etc.
   modalText: string;      // hex
   borderRadius: "sharp" | "rounded" | "pill";
+  // Behaviour
+  autoOpen: boolean;           // open the panel automatically on page load
+  displayMode: "corner" | "modal"; // corner = above FAB; modal = centered overlay
+  // Localisation
+  currency: string;            // suffix appended to prices, e.g. "Kč", "€", "$"
 }
 
 export const DEFAULT_WIDGET_CONFIG: WidgetConfig = {
@@ -36,6 +42,9 @@ export const DEFAULT_WIDGET_CONFIG: WidgetConfig = {
   modalAccent: "#6366f1",
   modalText: "#111111",
   borderRadius: "rounded",
+  autoOpen: false,
+  displayMode: "corner",
+  currency: "",
 };
 
 export interface WidgetData {

@@ -8,9 +8,11 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
   Clock, Palette, Layout, CheckCircle2, Loader2,
-  AlignLeft, AlignRight, Circle, Square, Minus
+  AlignLeft, AlignRight, Circle, Square, Minus,
+  Maximize2, PanelBottomOpen, Zap
 } from "lucide-react";
 import { WidgetConfig, DEFAULT_WIDGET_CONFIG } from "@/lib/types";
+import { TimeInput } from "@/components/ui/time-input";
 
 interface WidgetDesignerProps {
   restaurantId: string;
@@ -45,9 +47,17 @@ function px(radId: WidgetConfig["borderRadius"]) {
   return { sharp: "0px", rounded: "14px", pill: "24px" }[radId];
 }
 
-function ModalPreview({ cfg, name }: { cfg: WidgetConfig; name: string }) {
+function bgLuminance(hex: string): number {
+  const h = hex.replace("#", "");
+  if (h.length !== 6) return 1;
+  const r = parseInt(h.slice(0,2),16)/255, g = parseInt(h.slice(2,4),16)/255, b = parseInt(h.slice(4,6),16)/255;
+  const lin = (c: number) => c <= 0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
+  return 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b);
+}
+
+function ModalPreview({ cfg, name }: { cfg: WidgetConfig; name: string; currency?: string }) {
   const r = px(cfg.borderRadius);
-  const isDark = cfg.theme === "dark" || cfg.theme === "branded";
+  const isDark = bgLuminance(cfg.modalBg) < 0.35;
   const subText = isDark ? "rgba(255,255,255,0.45)" : "rgba(0,0,0,0.4)";
   const border  = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
   const itemBg  = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)";
@@ -68,8 +78,8 @@ function ModalPreview({ cfg, name }: { cfg: WidgetConfig; name: string }) {
 
       {/* header */}
       <div style={{ padding: "12px 20px 8px" }}>
-        <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-0.03em" }}>{name}</div>
-        <div style={{ fontSize: 11, color: subText, marginTop: 2, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+        <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: "-0.03em", color: cfg.modalText }}>{name}</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: subText, marginTop: 3, letterSpacing: "0.06em", textTransform: "uppercase" }}>
           {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
         </div>
       </div>
@@ -78,29 +88,20 @@ function ModalPreview({ cfg, name }: { cfg: WidgetConfig; name: string }) {
 
       {/* soup */}
       <div style={{ margin: "0 20px 12px" }}>
-        <div style={{ fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: subText, marginBottom: 6 }}>
+        <div style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: subText, marginBottom: 7, fontWeight: 700 }}>
           Soup of the Day
         </div>
-        <div
-          style={{
-            fontSize: 13,
-            fontStyle: "italic",
-            padding: "8px 12px",
-            background: itemBg,
-            borderRadius: `calc(${r} / 1.5)`,
-            borderLeft: `3px solid ${cfg.modalAccent}`,
-          }}
-        >
-          Roasted Tomato Bisque
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 13px", background: itemBg, borderRadius: `calc(${r} / 1.5)`, gap: 10 }}>
+          <div style={{ fontSize: 13, fontWeight: 500, fontStyle: "italic", color: cfg.modalText }}>Roasted Tomato Bisque</div>
         </div>
       </div>
 
       {/* mains */}
       <div style={{ margin: "0 20px 16px" }}>
-        <div style={{ fontSize: 9, letterSpacing: "0.2em", textTransform: "uppercase", color: subText, marginBottom: 6 }}>
+        <div style={{ fontSize: 9, letterSpacing: "0.18em", textTransform: "uppercase", color: subText, marginBottom: 7, fontWeight: 700 }}>
           Main Courses
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
           {PREVIEW_MAINS.map((item) => (
             <div
               key={item.name}
@@ -108,22 +109,24 @@ function ModalPreview({ cfg, name }: { cfg: WidgetConfig; name: string }) {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                padding: "9px 12px",
+                padding: "10px 13px",
                 background: itemBg,
                 borderRadius: `calc(${r} / 1.5)`,
-                opacity: item.soldOut ? 0.45 : 1,
+                marginBottom: 7,
+                gap: 10,
+                opacity: item.soldOut ? 0.42 : 1,
               }}
             >
               <div>
-                <div style={{ fontSize: 13, fontWeight: 500, textDecoration: item.soldOut ? "line-through" : "none" }}>
+                <div style={{ fontSize: 13, fontWeight: 500, color: cfg.modalText, textDecoration: item.soldOut ? "line-through" : "none" }}>
                   {item.name}
                 </div>
                 {item.soldOut && (
-                  <div style={{ fontSize: 9, color: "#ef4444", fontWeight: 700, marginTop: 1 }}>SOLD OUT</div>
+                  <div style={{ fontSize: 9, color: "#dc2626", fontWeight: 700, background: "#fee2e2", padding: "2px 6px", borderRadius: 20, marginTop: 2, display: "inline-block" }}>SOLD OUT</div>
                 )}
               </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: cfg.modalAccent, marginLeft: 12, whiteSpace: "nowrap" }}>
-                {item.price}
+              <div style={{ fontSize: 13, fontWeight: 700, color: cfg.modalAccent, whiteSpace: "nowrap" }}>
+                {item.price}{cfg.currency ? `\u00a0${cfg.currency}` : ""}
               </div>
             </div>
           ))}
@@ -241,23 +244,13 @@ export function WidgetDesigner({ restaurantId, restaurantName }: WidgetDesignerP
                 <Label className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
                   Show from
                 </Label>
-                <Input
-                  type="time"
-                  value={cfg.showFrom}
-                  onChange={e => set("showFrom", e.target.value)}
-                  className="h-10"
-                />
+                <TimeInput value={cfg.showFrom} onChange={v => set("showFrom", v)} />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
                   Hide after
                 </Label>
-                <Input
-                  type="time"
-                  value={cfg.showUntil}
-                  onChange={e => set("showUntil", e.target.value)}
-                  className="h-10"
-                />
+                <TimeInput value={cfg.showUntil} onChange={v => set("showUntil", v)} />
               </div>
             </div>
           )}
@@ -446,6 +439,59 @@ export function WidgetDesigner({ restaurantId, restaurantName }: WidgetDesignerP
           </div>
         </section>
 
+        <div className="h-px bg-zinc-200 dark:bg-zinc-700" />
+
+        {/* ── Behaviour ── */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+            <Zap className="h-4 w-4 text-indigo-500" />
+            Behaviour
+          </div>
+
+          {/* Auto-open */}
+          <div className="flex items-center justify-between rounded-xl bg-zinc-50 dark:bg-zinc-800/50 px-4 py-3">
+            <div>
+              <p className="text-sm font-medium">Auto-open on page load</p>
+              <p className="text-xs text-zinc-500 mt-0.5">Panel opens automatically when visitors arrive</p>
+            </div>
+            <Switch
+              checked={cfg.autoOpen}
+              onCheckedChange={v => set("autoOpen", v)}
+            />
+          </div>
+
+          {/* Display mode */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Panel Style</Label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => set("displayMode", "corner")}
+                className={`flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl border text-sm transition-all ${
+                  cfg.displayMode === "corner"
+                    ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 font-medium"
+                    : "border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:border-zinc-300"
+                }`}
+              >
+                <PanelBottomOpen className="h-5 w-5" />
+                <span className="text-xs">Corner</span>
+                <span className="text-[10px] text-zinc-400 font-normal">above button</span>
+              </button>
+              <button
+                onClick={() => set("displayMode", "modal")}
+                className={`flex-1 flex flex-col items-center gap-1.5 py-3 rounded-xl border text-sm transition-all ${
+                  cfg.displayMode === "modal"
+                    ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 font-medium"
+                    : "border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:border-zinc-300"
+                }`}
+              >
+                <Maximize2 className="h-5 w-5" />
+                <span className="text-xs">Modal</span>
+                <span className="text-[10px] text-zinc-400 font-normal">centered overlay</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
         {/* Save */}
         <Button
           className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white"
@@ -499,7 +545,7 @@ export function WidgetDesigner({ restaurantId, restaurantName }: WidgetDesignerP
         <div>
           <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-widest mb-2 pl-1">Open — panel above button</p>
           <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 space-y-2">
-            <ModalPreview cfg={cfg} name={restaurantName} />
+            <ModalPreview cfg={cfg} name={restaurantName} currency={cfg.currency} />
             {/* FAB below the panel, same side */}
             <div className={`flex ${cfg.fabPosition === "bottom-left" ? "justify-start" : "justify-end"}`}>
               <FabPreview cfg={cfg} />

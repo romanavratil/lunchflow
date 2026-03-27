@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { MenuUpload } from "@/components/menu-upload";
 import { MenuEditor } from "@/components/menu-editor";
+import { WeeklyMenuUpload } from "@/components/weekly-menu-upload";
 import { ParsedMenu } from "@/lib/types";
-import { Sparkles, CheckCircle2, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { Sparkles, CheckCircle2, CalendarDays, ChevronLeft, ChevronRight, Copy } from "lucide-react";
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 
@@ -56,6 +57,7 @@ export function MenuSection({
   today.setHours(0, 0, 0, 0);
   const todayStr = toDateStr(today);
 
+  const [currency, setCurrency] = useState("");
   const [weekStart, setWeekStart] = useState<Date>(getMondayOf(today));
   const [selectedDate, setSelectedDate] = useState<Date>(today);
   const [weekMenus, setWeekMenus] = useState<Record<string, SavedMenu>>({});
@@ -86,6 +88,14 @@ export function MenuSection({
 
   useEffect(() => { loadWeek(); }, [loadWeek]);
 
+  useEffect(() => {
+    if (!restaurantId) return;
+    fetch(`/api/restaurants/${restaurantId}/widget-config`)
+      .then((r) => r.json())
+      .then((cfg) => { if (cfg.currency) setCurrency(cfg.currency); })
+      .catch(() => {});
+  }, [restaurantId]);
+
   // When selected day changes, load that day's menu into the editor
   useEffect(() => {
     const saved = weekMenus[selectedStr];
@@ -112,6 +122,57 @@ export function MenuSection({
     } finally {
       setSaving(false);
     }
+  };
+
+  const [copying, setCopying] = useState(false);
+
+  const handleCopyPrev = async () => {
+    setCopying(true);
+    try {
+      // Look back up to 14 days for the most recent saved menu before selectedDate
+      const lookbackDate = new Date(selectedDate);
+      lookbackDate.setDate(lookbackDate.getDate() - 14);
+      const from = toDateStr(lookbackDate);
+      // to = day before selectedDate
+      const dayBefore = new Date(selectedDate);
+      dayBefore.setDate(dayBefore.getDate() - 1);
+      const to = toDateStr(dayBefore);
+
+      const res = await fetch(`/api/restaurants/${restaurantId}/menus?from=${from}&to=${to}`);
+      if (!res.ok) return;
+      const list: SavedMenu[] = await res.json();
+      if (!list.length) return;
+      // Most recent comes last (ordered asc), take the last item
+      const prev = list[list.length - 1];
+      setMenu({ soup: prev.soup, soupPrice: prev.soupPrice ?? null, mains: prev.mains });
+    } finally {
+      setCopying(false);
+    }
+  };
+
+  const handleSaveAllWeek = async (days: Partial<Record<string, ParsedMenu>>) => {
+    const DAY_OFFSETS: Record<string, number> = {
+      monday: 0, tuesday: 1, wednesday: 2, thursday: 3,
+      friday: 4, saturday: 5, sunday: 6,
+    };
+    // Find the Monday of the currently viewed week
+    const monday = new Date(weekStart);
+    await Promise.all(
+      Object.entries(days).map(async ([dayKey, dayMenu]) => {
+        if (!dayMenu) return;
+        const offset = DAY_OFFSETS[dayKey] ?? 0;
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + offset);
+        const dateStr = toDateStr(date);
+        await fetch(`/api/restaurants/${restaurantId}/menus`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...dayMenu, isPublished: false, date: dateStr }),
+        });
+      })
+    );
+    // Reload the week so day dots update
+    await loadWeek();
   };
 
   function prevWeek() {
@@ -249,6 +310,9 @@ export function MenuSection({
         </div>
       )}
 
+      {/* ── Weekly AI import ────────────────────────────────────────────── */}
+      <WeeklyMenuUpload onSaveAll={handleSaveAllWeek} currency={currency} />
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* AI Upload */}
         <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm overflow-hidden">
@@ -276,7 +340,18 @@ export function MenuSection({
           <div className="px-5 pt-5 pb-4 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <h2 className="text-[14px] font-semibold text-gray-900">Edit &amp; Publish</h2>
-              <span className="text-[11px] text-gray-400 font-medium">{selectedFmt}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-gray-400 font-medium">{selectedFmt}</span>
+                <button
+                  onClick={handleCopyPrev}
+                  disabled={copying}
+                  title="Copy most recent previous menu into this day"
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-gray-200 text-[11px] font-semibold text-gray-500 hover:bg-gray-50 hover:text-indigo-600 hover:border-indigo-300 transition disabled:opacity-40"
+                >
+                  <Copy className="h-3 w-3" />
+                  {copying ? "Copying…" : "Copy prev day"}
+                </button>
+              </div>
             </div>
             <p className="text-[12px] text-gray-400 mt-0.5">
               Review items, adjust prices, toggle sold-out
@@ -288,6 +363,7 @@ export function MenuSection({
               onChange={setMenu}
               onSave={handleSave}
               saving={saving}
+              currency={currency}
             />
           </div>
         </div>

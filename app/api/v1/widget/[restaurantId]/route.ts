@@ -15,20 +15,25 @@ export async function GET(
     return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Use a wide window (start of UTC day → end) so noon-stored dates are always found
+  const todayStart = new Date();
+  todayStart.setUTCHours(0, 0, 0, 0);
+  const todayEnd = new Date();
+  todayEnd.setUTCHours(23, 59, 59, 999);
 
   const [menu, announcement] = await Promise.all([
     prisma.dailyMenu.findFirst({
-      where: { restaurantId, date: { gte: today }, isPublished: true },
+      where: { restaurantId, date: { gte: todayStart, lte: todayEnd }, isPublished: true },
       orderBy: { date: "desc" },
     }),
     prisma.announcement.findFirst({
       where: {
         restaurantId,
         isActive: true,
-        OR: [{ startTime: null }, { startTime: { lte: new Date() } }],
-        AND: [{ OR: [{ endTime: null }, { endTime: { gte: new Date() } }] }],
+        AND: [
+          { OR: [{ startTime: null }, { startTime: { lte: new Date() } }] },
+          { OR: [{ endTime: null }, { endTime: { gte: new Date() } }] },
+        ],
       },
       orderBy: { createdAt: "desc" },
     }),

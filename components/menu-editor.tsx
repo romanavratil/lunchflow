@@ -14,9 +14,10 @@ interface MenuEditorProps {
   onChange: (menu: ParsedMenu) => void;
   onSave: (menu: ParsedMenu, publish: boolean) => Promise<void>;
   saving?: boolean;
+  currency?: string;
 }
 
-export function MenuEditor({ menu, onChange, onSave, saving }: MenuEditorProps) {
+export function MenuEditor({ menu, onChange, onSave, saving, currency }: MenuEditorProps) {
   const [publishing, setPublishing] = useState(false);
 
   const updateSoup = (v: string) => onChange({ ...menu, soup: v || null });
@@ -28,7 +29,7 @@ export function MenuEditor({ menu, onChange, onSave, saving }: MenuEditorProps) 
   };
 
   const addMain = () =>
-    onChange({ ...menu, mains: [...menu.mains, { name: "", price: "", soldOut: false }] });
+    onChange({ ...menu, mains: [...menu.mains, { name: "", description: "", price: "", soldOut: false }] });
 
   const removeMain = (i: number) =>
     onChange({ ...menu, mains: menu.mains.filter((_, idx) => idx !== i) });
@@ -54,12 +55,17 @@ export function MenuEditor({ menu, onChange, onSave, saving }: MenuEditorProps) 
             placeholder="e.g. Roasted Tomato Bisque"
             className="h-11 flex-1"
           />
-          <Input
-            value={menu.soupPrice ?? ""}
-            onChange={(e) => updateSoupPrice(e.target.value)}
-            placeholder="$0.00"
-            className="h-11 w-24"
-          />
+          <div className="flex items-center gap-1.5">
+            <Input
+              value={menu.soupPrice ?? ""}
+              onChange={(e) => updateSoupPrice(e.target.value)}
+              placeholder="0"
+              className="h-11 w-20"
+            />
+            {currency && (
+              <span className="text-[13px] font-semibold text-zinc-400 whitespace-nowrap">{currency}</span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -87,14 +93,25 @@ export function MenuEditor({ menu, onChange, onSave, saving }: MenuEditorProps) 
                   value={item.name}
                   onChange={(e) => updateMain(i, "name", e.target.value)}
                   placeholder="Dish name"
-                  className={`h-9 mb-2 ${item.soldOut ? "line-through opacity-50" : ""}`}
+                  className={`h-9 mb-1.5 ${item.soldOut ? "line-through opacity-50" : ""}`}
                 />
                 <Input
-                  value={item.price}
-                  onChange={(e) => updateMain(i, "price", e.target.value)}
-                  placeholder="$0.00"
-                  className="h-9 w-32"
+                  value={item.description ?? ""}
+                  onChange={(e) => updateMain(i, "description", e.target.value)}
+                  placeholder="Description (optional)"
+                  className="h-8 mb-1.5 text-[12px] text-gray-500"
                 />
+                <div className="flex items-center gap-1.5">
+                  <Input
+                    value={item.price}
+                    onChange={(e) => updateMain(i, "price", e.target.value)}
+                    placeholder="0"
+                    className="h-9 w-24"
+                  />
+                  {currency && (
+                    <span className="text-[12px] font-semibold text-zinc-400 whitespace-nowrap">{currency}</span>
+                  )}
+                </div>
               </div>
 
               <div className="flex flex-col items-center gap-2 shrink-0">

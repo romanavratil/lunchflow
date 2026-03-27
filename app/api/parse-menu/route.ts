@@ -8,9 +8,10 @@ const MenuSchema = z.object({
   soup: z.string().nullable(),
   mains: z.array(
     z.object({
-      name: z.string(),
-      price: z.string(),
-      soldOut: z.boolean().default(false),
+      name:        z.string(),
+      description: z.string().optional().catch(undefined),
+      price:       z.string(),
+      soldOut:     z.boolean().default(false),
     })
   ),
 });
@@ -41,10 +42,10 @@ Return ONLY a valid JSON object with this exact structure, no markdown, no expla
 {
   "soup": "soup name here or null if none",
   "mains": [
-    { "name": "dish name", "price": "price as string e.g. $12.50", "soldOut": false }
+    { "name": "dish name", "description": "short description or empty string", "price": "price as string e.g. 12.50", "soldOut": false }
   ]
 }
-Extract all visible menu items. If a price is missing, use "Market Price". If no soup section exists, set soup to null.`,
+Extract all visible menu items including any short descriptions or ingredient notes. If a price is missing, use "". If no soup section exists, set soup to null. If no description is visible for an item, use "".`,
             },
             {
               type: "image_url",

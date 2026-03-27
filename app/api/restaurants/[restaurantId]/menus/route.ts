@@ -24,8 +24,15 @@ export async function POST(
   const body = await req.json();
   const data = MenuSchema.parse(body);
 
-  const targetDate = data.date ? new Date(data.date) : new Date();
-  targetDate.setHours(0, 0, 0, 0);
+  let targetDate: Date;
+  if (data.date) {
+    // Parse as local noon to avoid UTC midnight rolling back to previous day in +offset timezones
+    const [y, m, day] = data.date.split("-").map(Number);
+    targetDate = new Date(y, m - 1, day, 12, 0, 0, 0);
+  } else {
+    targetDate = new Date();
+    targetDate.setHours(12, 0, 0, 0);
+  }
 
   const menu = await prisma.dailyMenu.upsert({
     where: {
@@ -62,12 +69,17 @@ export async function GET(
   const from = searchParams.get("from");
   const to = searchParams.get("to");
 
+  function parseLocalDate(s: string): Date {
+    const [y, m, d] = s.split("-").map(Number);
+    return new Date(y, m - 1, d, 12, 0, 0, 0);
+  }
+
   const where = from && to
     ? {
         restaurantId,
         date: {
-          gte: new Date(from),
-          lte: new Date(to),
+          gte: parseLocalDate(from),
+          lte: parseLocalDate(to),
         },
       }
     : { restaurantId };

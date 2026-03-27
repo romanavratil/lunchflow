@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { DateTimeInput } from "@/components/ui/time-input";
+import { AnnouncementFormSkeleton } from "@/app/dashboard/_components/skeletons";
 import { Megaphone } from "lucide-react";
 
 interface AnnouncementData {
@@ -18,6 +20,13 @@ interface AnnouncementData {
 
 interface AnnouncementEditorProps {
   restaurantId: string;
+}
+
+/** Convert UTC ISO string from server → local datetime-local string for the input */
+function isoToLocalInput(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 const PRESET_COLORS = [
@@ -40,6 +49,28 @@ export function AnnouncementEditor({ restaurantId }: AnnouncementEditorProps) {
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/restaurants/${restaurantId}/announcements`)
+      .then((r) => r.json())
+      .then((list: Array<AnnouncementData & { startTime: string | null; endTime: string | null }>) => {
+        const active = list.find((a) => a.isActive) ?? list[0];
+        if (active) {
+          setData({
+            text: active.text,
+            bgColor: active.bgColor,
+            textColor: active.textColor,
+            isActive: active.isActive,
+            startTime: active.startTime ? isoToLocalInput(active.startTime) : "",
+            endTime: active.endTime ? isoToLocalInput(active.endTime) : "",
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restaurantId]);
 
   const update = (k: keyof AnnouncementData, v: string | boolean) =>
     setData((d) => ({ ...d, [k]: v }));
@@ -54,8 +85,8 @@ export function AnnouncementEditor({ restaurantId }: AnnouncementEditorProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
-          startTime: data.startTime || null,
-          endTime: data.endTime || null,
+          startTime: data.startTime ? new Date(data.startTime).toISOString() : null,
+          endTime: data.endTime ? new Date(data.endTime).toISOString() : null,
         }),
       });
       setSaved(true);
@@ -64,6 +95,8 @@ export function AnnouncementEditor({ restaurantId }: AnnouncementEditorProps) {
       setSaving(false);
     }
   };
+
+  if (loading) return <AnnouncementFormSkeleton />;
 
   return (
     <div className="space-y-5">
@@ -117,23 +150,19 @@ export function AnnouncementEditor({ restaurantId }: AnnouncementEditorProps) {
       </div>
 
       {/* Schedule */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-3">
         <div className="space-y-2">
           <Label className="text-sm font-semibold">Show From</Label>
-          <Input
-            type="datetime-local"
+          <DateTimeInput
             value={data.startTime}
-            onChange={(e) => update("startTime", e.target.value)}
-            className="h-10 text-sm"
+            onChange={(v) => update("startTime", v)}
           />
         </div>
         <div className="space-y-2">
           <Label className="text-sm font-semibold">Hide At</Label>
-          <Input
-            type="datetime-local"
+          <DateTimeInput
             value={data.endTime}
-            onChange={(e) => update("endTime", e.target.value)}
-            className="h-10 text-sm"
+            onChange={(v) => update("endTime", v)}
           />
         </div>
       </div>
