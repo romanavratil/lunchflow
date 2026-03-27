@@ -1,9 +1,104 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Settings, Copy, Check, Save, Loader2, Building2, Key, Palette, DollarSign, MapPin } from "lucide-react";
 import { WidgetConfig, DEFAULT_WIDGET_CONFIG } from "@/lib/types";
+
+interface NominatimResult {
+  display_name: string;
+  lat: string;
+  lon: string;
+}
+
+function AddressAutocomplete({
+  value,
+  onChange,
+  onSelect,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSelect: (address: string, lat: string, lon: string) => void;
+}) {
+  const [suggestions, setSuggestions] = useState<NominatimResult[]>([]);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const search = useCallback((q: string) => {
+    if (q.length < 3) { setSuggestions([]); setOpen(false); return; }
+    setLoading(true);
+    fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1`, {
+      headers: { "Accept-Language": "en" },
+    })
+      .then(r => r.json())
+      .then((results: NominatimResult[]) => {
+        setSuggestions(results);
+        setOpen(results.length > 0);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const v = e.target.value;
+    onChange(v);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => search(v), 400);
+  }
+
+  function handlePick(r: NominatimResult) {
+    onSelect(r.display_name, r.lat, r.lon);
+    setSuggestions([]);
+    setOpen(false);
+  }
+
+  // Close on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="relative">
+        <input
+          value={value}
+          onChange={handleChange}
+          onFocus={() => suggestions.length > 0 && setOpen(true)}
+          placeholder="Start typing an address…"
+          autoComplete="off"
+          className="w-full px-3.5 py-2.5 pr-9 rounded-xl border border-gray-200 text-[14px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition"
+        />
+        {loading && (
+          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 animate-spin" />
+        )}
+      </div>
+      {open && (
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+          {suggestions.map((r, i) => (
+            <li key={i}>
+              <button
+                type="button"
+                onMouseDown={() => handlePick(r)}
+                className="w-full text-left px-3.5 py-2.5 text-[13px] text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition flex items-start gap-2"
+              >
+                <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0 text-gray-400" />
+                <span className="line-clamp-2">{r.display_name}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 const CURRENCY_PRESETS = [
   { label: "Kč", value: "Kč" },
@@ -173,27 +268,20 @@ export function SettingsSection({
               <MapPin className="h-3.5 w-3.5" />
               Address (shown on map)
             </label>
-            <input
+            <AddressAutocomplete
               value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="Václavské náměstí 1, Prague"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition"
+              onChange={setAddress}
+              onSelect={(addr, lat, lon) => {
+                setAddress(addr);
+                setLatitude(lat);
+                setLongitude(lon);
+              }}
             />
-            <div className="flex gap-2 mt-2">
-              <input
-                value={latitude}
-                onChange={(e) => setLatitude(e.target.value)}
-                placeholder="Latitude e.g. 50.0755"
-                className="flex-1 px-3.5 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-900 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition"
-              />
-              <input
-                value={longitude}
-                onChange={(e) => setLongitude(e.target.value)}
-                placeholder="Longitude e.g. 14.4378"
-                className="flex-1 px-3.5 py-2.5 rounded-xl border border-gray-200 text-[14px] text-gray-900 font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition"
-              />
-            </div>
-            <p className="text-[11px] text-gray-400 mt-1">Find coordinates on <a href="https://maps.google.com" target="_blank" rel="noreferrer" className="text-indigo-500 hover:underline">Google Maps</a> — right-click a location</p>
+            {latitude && longitude && (
+              <p className="text-[11px] text-gray-400 mt-1.5 font-mono">
+                {parseFloat(latitude).toFixed(5)}, {parseFloat(longitude).toFixed(5)}
+              </p>
+            )}
           </div>
 
           <div className="pt-1">
